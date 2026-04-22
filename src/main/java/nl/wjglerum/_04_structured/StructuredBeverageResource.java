@@ -6,7 +6,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.Response;
 
 import java.time.Duration;
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.concurrent.StructuredTaskScope;
 
 @Path("/beverage/structured")
-@Transactional
 @RunOnVirtualThread
 @SuppressWarnings("preview")
 public class StructuredBeverageResource {
@@ -30,6 +28,7 @@ public class StructuredBeverageResource {
 
     @GET
     @Path("/simple")
+    @Transactional
     public List<StructuredBeverage> getBeveragesSimple() throws InterruptedException {
         Log.info("Going to get structured beverages simple");
         try (var scope = StructuredTaskScope.open()) {
@@ -45,6 +44,7 @@ public class StructuredBeverageResource {
 
     @GET
     @Path("/custom")
+    @Transactional
     public List<StructuredBeverage> getBeveragesCustom() throws InterruptedException {
         Log.info("Going to get structured beverages custom");
         var joiner = StructuredTaskScope.Joiner.<StructuredBeverage>allSuccessfulOrThrow();
@@ -61,11 +61,12 @@ public class StructuredBeverageResource {
     }
 
     /**
-     * Race mode: fork 3 bartenders, return the first one to finish.
+     * Race mode: fork 3 bartenders, persist the first one to finish.
      * The other two are cancelled automatically when the scope closes.
      */
     @GET
     @Path("/race")
+    @Transactional
     public StructuredBeverage getBeverageRace() throws InterruptedException {
         Log.info("Going to race 3 bartenders — first one wins");
         var joiner = StructuredTaskScope.Joiner.<StructuredBeverage>anySuccessfulOrThrow();
@@ -73,7 +74,9 @@ public class StructuredBeverageResource {
             scope.fork(bartender::get);
             scope.fork(bartender::get);
             scope.fork(bartender::get);
-            return scope.join();
+            var winner = scope.join();
+            repository.save(winner);
+            return winner;
         }
     }
 
@@ -83,7 +86,6 @@ public class StructuredBeverageResource {
      */
     @GET
     @Path("/failfast")
-    @Transactional(jakarta.transaction.Transactional.TxType.NOT_SUPPORTED)
     public Response getBeveragesFailFast() throws InterruptedException {
         Log.info("Going to get beverages fail-fast — one failure cancels siblings");
         var joiner = StructuredTaskScope.Joiner.<StructuredBeverage>allSuccessfulOrThrow();
@@ -103,11 +105,11 @@ public class StructuredBeverageResource {
     }
 
     /**
-     * Timeout: the whole scope is cancelled if no result arrives within 2x the bartender delay.
+     * Timeout: the whole scope is cancelled after 150 ms — always fires in dev (3 s delay),
+     * may or may not fire in test (100 ms delay). Subtasks are cancelled automatically.
      */
     @GET
     @Path("/timeout")
-    @Transactional(jakarta.transaction.Transactional.TxType.NOT_SUPPORTED)
     public Response getBeveragesWithTimeout() throws InterruptedException {
         Log.info("Going to get beverages with scope-level timeout");
         var joiner = StructuredTaskScope.Joiner.<StructuredBeverage>allSuccessfulOrThrow();

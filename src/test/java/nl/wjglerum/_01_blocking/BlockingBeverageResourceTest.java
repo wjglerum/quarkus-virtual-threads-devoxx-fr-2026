@@ -9,7 +9,6 @@ import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 @QuarkusTest
 @TestHTTPEndpoint(BlockingBeverageResource.class)
@@ -60,6 +59,7 @@ class BlockingBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("requested", equalTo(5))
-                .body("succeeded", greaterThanOrEqualTo(1));
+                .body("succeeded", equalTo(5))
+                .body("failed", equalTo(0));
     }
 }

@@ -16,7 +16,7 @@ Each approach uses the same business logic so the trade-offs are immediately com
 | Docker or Podman | running |
 | Maven | bundled via `./mvnw` |
 
-> **Why `--enable-preview`?** Structured Concurrency (`StructuredTaskScope`) is a preview feature in Java 26. Everything else works on Java 21+.
+> **Why `--enable-preview`?** Structured Concurrency (`StructuredTaskScope`) is a preview feature in Java 26. The whole project compiles against Java 26 with preview enabled.
 
 All external dependencies (PostgreSQL, WireMock, Grafana/LGTM) are started automatically as **DevServices** when you run in dev mode — no manual setup required.
 
