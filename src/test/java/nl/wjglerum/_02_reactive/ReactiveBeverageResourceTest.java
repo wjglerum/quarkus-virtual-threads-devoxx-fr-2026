@@ -21,7 +21,7 @@ class ReactiveBeverageResourceTest {
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
-                .body(containsString("Reactive coffee"));
+                .body(containsString("Reactive Coffee"));
     }
 
     @Test
@@ -33,7 +33,7 @@ class ReactiveBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("size()", is(3))
-                .body(containsString("Reactive coffee"));
+                .body(containsString("Reactive Coffee"));
     }
 
     @Test
@@ -45,6 +45,6 @@ class ReactiveBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("size()", is(3))
-                .body(containsString("Reactive coffee"));
+                .body(containsString("Reactive Coffee"));
     }
 }

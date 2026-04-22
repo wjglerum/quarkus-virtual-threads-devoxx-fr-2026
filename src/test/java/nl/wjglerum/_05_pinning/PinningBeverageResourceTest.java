@@ -26,7 +26,7 @@ class PinningBeverageResourceTest {
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
-                .body(containsString("Pinning coffee"));
+                .body(containsString("Pinning Coffee"));
     }
 
     @Test
@@ -38,7 +38,7 @@ class PinningBeverageResourceTest {
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
-                .body(containsString("Unpinning coffee"));
+                .body(containsString("Unpinning Coffee"));
     }
 
     @Test
@@ -50,7 +50,7 @@ class PinningBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("size()", is(3))
-                .body(containsString("Pinning coffee"));
+                .body(containsString("Pinning Coffee"));
     }
 
     @Test
@@ -63,6 +63,6 @@ class PinningBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("size()", is(3))
-                .body(containsString("Unpinning coffee"));
+                .body(containsString("Unpinning Coffee"));
     }
 }

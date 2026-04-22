@@ -2,27 +2,25 @@ package nl.wjglerum._04_structured;
 
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import jakarta.inject.Inject;
+import nl.wjglerum.client.CoffeeMachineClient;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
-import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 
 @ApplicationScoped
 public class FlakeyBartender {
 
-    @ConfigProperty(name = "bartender.delay")
-    Duration delay;
+    @Inject
+    @RestClient
+    CoffeeMachineClient coffeeMachine;
 
     public StructuredBeverage get() {
         Log.info("Warming up the flakey coffee machine (50% chance of failure)");
-        try {
-            Thread.sleep(delay.toMillis());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        var response = coffeeMachine.brew();
         if (ThreadLocalRandom.current().nextBoolean()) {
             throw new RuntimeException("Coffee machine broke!");
         }
-        return new StructuredBeverage("Flakey coffee");
+        return new StructuredBeverage("Flakey " + response.name());
     }
 }

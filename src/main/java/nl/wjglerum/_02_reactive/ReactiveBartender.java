@@ -1,22 +1,22 @@
 package nl.wjglerum._02_reactive;
 
-import java.time.Duration;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import nl.wjglerum.client.CoffeeMachineClient;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 @ApplicationScoped
 public class ReactiveBartender {
 
-    @ConfigProperty(name = "bartender.delay")
-    Duration delay;
+    @Inject
+    @RestClient
+    CoffeeMachineClient coffeeMachine;
 
     public Uni<ReactiveBeverage> get() {
         Log.info("Warming up the reactive coffee machine");
-        return Uni.createFrom().item(new ReactiveBeverage("Reactive coffee")).onItem().delayIt().by(delay);
+        return coffeeMachine.brewAsync()
+                .map(response -> new ReactiveBeverage("Reactive " + response.name()));
     }
 }

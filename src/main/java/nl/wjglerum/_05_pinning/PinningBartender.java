@@ -2,24 +2,21 @@ package nl.wjglerum._05_pinning;
 
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import java.time.Duration;
+import jakarta.inject.Inject;
+import nl.wjglerum.client.CoffeeMachineClient;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 @ApplicationScoped
 public class PinningBartender {
 
-    @ConfigProperty(name = "bartender.delay")
-    Duration delay;
+    @Inject
+    @RestClient
+    CoffeeMachineClient coffeeMachine;
 
-    // synchronized pins the virtual thread to its carrier — this is the gotcha
+    // synchronized pins the virtual thread to its carrier for the duration of the HTTP call
     public synchronized PinningBeverage get() {
         Log.info("Warming up the pinning coffee machine (PINNED!)");
-        try {
-            Thread.sleep(delay.toMillis());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        return new PinningBeverage("Pinning coffee");
+        var response = coffeeMachine.brew();
+        return new PinningBeverage("Pinning " + response.name());
     }
 }

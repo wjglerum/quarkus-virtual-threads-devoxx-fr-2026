@@ -23,7 +23,7 @@ class BlockingBeverageResourceTest {
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
-                .body(containsString("Blocking coffee"));
+                .body(containsString("Blocking Coffee"));
     }
 
     @Test
@@ -35,7 +35,7 @@ class BlockingBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("size()", is(3))
-                .body(containsString("Blocking coffee"));
+                .body(containsString("Blocking Coffee"));
     }
 
     @Test
@@ -47,7 +47,7 @@ class BlockingBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("size()", is(3))
-                .body(containsString("Blocking coffee"));
+                .body(containsString("Blocking Coffee"));
     }
 
     @Test

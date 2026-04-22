@@ -28,7 +28,7 @@ class StructuredBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("size()", equalTo(3))
-                .body(containsString("Structured coffee"));
+                .body(containsString("Structured Coffee"));
     }
 
     @Test
@@ -40,7 +40,7 @@ class StructuredBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("size()", equalTo(3))
-                .body(containsString("Structured coffee"));
+                .body(containsString("Structured Coffee"));
     }
 
     @Test
@@ -51,7 +51,7 @@ class StructuredBeverageResourceTest {
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
-                .body("name", equalTo("Structured coffee"));
+                .body("name", equalTo("Structured Coffee"));
     }
 
     @Test

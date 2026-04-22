@@ -28,7 +28,7 @@ class VirtualBeverageResourceTest {
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body(containsString("Virtual coffee"));
+                .body(containsString("Virtual Coffee"));
     }
 
     @Test
@@ -40,7 +40,7 @@ class VirtualBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("size()", is(3))
-                .body(containsString("Virtual coffee"));
+                .body(containsString("Virtual Coffee"));
     }
 
     @Test
@@ -52,7 +52,7 @@ class VirtualBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("size()", is(3))
-                .body(containsString("Virtual coffee"));
+                .body(containsString("Virtual Coffee"));
     }
 
     @Test
@@ -64,7 +64,7 @@ class VirtualBeverageResourceTest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("size()", is(3))
-                .body(containsString("Virtual coffee"));
+                .body(containsString("Virtual Coffee"));
     }
 
     @Test

@@ -1,26 +1,21 @@
 package nl.wjglerum._03_virtual;
 
-import java.time.Duration;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import io.quarkus.logging.Log;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import nl.wjglerum.client.CoffeeMachineClient;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 @ApplicationScoped
 public class VirtualBartender {
 
-    @ConfigProperty(name = "bartender.delay")
-    Duration delay;
+    @Inject
+    @RestClient
+    CoffeeMachineClient coffeeMachine;
 
     public VirtualBeverage get() {
         Log.info("Warming up the virtual coffee machine");
-        try {
-            Thread.sleep(delay.toMillis());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        return new VirtualBeverage("Virtual coffee");
+        var response = coffeeMachine.brew();
+        return new VirtualBeverage("Virtual " + response.name());
     }
 }
