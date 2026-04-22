@@ -9,10 +9,12 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
 import org.eclipse.microprofile.context.ManagedExecutor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
 import nl.wjglerum.FloodResult;
 
@@ -57,19 +59,24 @@ public class BlockingBeverageResource {
         var succeeded = new AtomicInteger();
         var failed = new AtomicInteger();
         var start = System.currentTimeMillis();
-        var futures = IntStream.range(0, count)
-                .mapToObj(i -> executor.submit(() -> {
+        var futures = new ArrayList<Future<?>>(count);
+        for (int i = 0; i < count; i++) {
+            try {
+                futures.add(executor.submit(() -> {
                     try {
                         bartender.get();
                         succeeded.incrementAndGet();
                     } catch (Exception e) {
                         failed.incrementAndGet();
                     }
-                }))
-                .toList();
-        futures.forEach(f -> {
-            try { f.get(); } catch (Exception ignored) { failed.incrementAndGet(); }
-        });
+                }));
+            } catch (RejectedExecutionException e) {
+                failed.incrementAndGet();
+            }
+        }
+        for (var f : futures) {
+            try { f.get(); } catch (ExecutionException | InterruptedException ignored) {}
+        }
         return new FloodResult(count, succeeded.get(), failed.get(), System.currentTimeMillis() - start);
     }
 
