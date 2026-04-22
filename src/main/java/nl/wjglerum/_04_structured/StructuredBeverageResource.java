@@ -12,6 +12,12 @@ import nl.wjglerum.ErrorResult;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.StructuredTaskScope.FailedException;
+import java.util.concurrent.StructuredTaskScope.Joiner;
+import java.util.concurrent.StructuredTaskScope.TimeoutException;
+
+import static jakarta.ws.rs.core.Response.Status.REQUEST_TIMEOUT;
+import static jakarta.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 
 @Path("/beverage/structured")
 @RunOnVirtualThread
@@ -33,11 +39,11 @@ public class StructuredBeverageResource {
     public List<StructuredBeverage> getBeveragesSimple() throws InterruptedException {
         Log.info("Going to get structured beverages simple");
         try (var scope = StructuredTaskScope.open()) {
-            var beverage1 = scope.fork(bartender::get);
-            var beverage2 = scope.fork(bartender::get);
-            var beverage3 = scope.fork(bartender::get);
+            var b1 = scope.fork(bartender::get);
+            var b2 = scope.fork(bartender::get);
+            var b3 = scope.fork(bartender::get);
             scope.join();
-            var beverages = List.of(beverage1.get(), beverage2.get(), beverage3.get());
+            var beverages = List.of(b1.get(), b2.get(), b3.get());
             repository.save(beverages);
             return beverages;
         }
@@ -48,10 +54,12 @@ public class StructuredBeverageResource {
     @Transactional
     public List<StructuredBeverage> getBeveragesCustom() throws InterruptedException {
         Log.info("Going to get structured beverages custom");
-        var joiner = StructuredTaskScope.Joiner.<StructuredBeverage>allSuccessfulOrThrow();
-        var currentThread = Thread.currentThread().getName();
-        var threadFactory = Thread.ofVirtual().name(currentThread + "-structured-beverage-", 0).factory();
-        try (var scope = StructuredTaskScope.open(joiner, cf -> cf.withThreadFactory(threadFactory))) {
+        var name = Thread.currentThread().getName();
+        var threadFactory = Thread.ofVirtual().name(name + "-structured-", 0).factory();
+        try (var scope = StructuredTaskScope.open(
+                Joiner.<StructuredBeverage>allSuccessfulOrThrow(),
+                cf -> cf.withThreadFactory(threadFactory)
+        )) {
             scope.fork(bartender::get);
             scope.fork(bartender::get);
             scope.fork(bartender::get);
@@ -66,8 +74,9 @@ public class StructuredBeverageResource {
     @Transactional
     public StructuredBeverage getBeverageRace() throws InterruptedException {
         Log.info("Going to race 3 bartenders — first one wins, siblings cancelled");
-        var joiner = StructuredTaskScope.Joiner.<StructuredBeverage>anySuccessfulOrThrow();
-        try (var scope = StructuredTaskScope.open(joiner)) {
+        try (var scope = StructuredTaskScope.open(
+                Joiner.<StructuredBeverage>anySuccessfulOrThrow()
+        )) {
             scope.fork(bartender::get);
             scope.fork(bartender::get);
             scope.fork(bartender::get);
@@ -81,18 +90,16 @@ public class StructuredBeverageResource {
     @Path("/failfast")
     public Response getBeveragesFailFast() throws InterruptedException {
         Log.info("Going to get beverages fail-fast — one failure cancels siblings");
-        var joiner = StructuredTaskScope.Joiner.<StructuredBeverage>allSuccessfulOrThrow();
-        try (var scope = StructuredTaskScope.open(joiner)) {
+        try (var scope = StructuredTaskScope.open(
+                Joiner.<StructuredBeverage>allSuccessfulOrThrow()
+        )) {
             scope.fork(flakeyBartender::get);
             scope.fork(flakeyBartender::get);
             scope.fork(flakeyBartender::get);
-            try {
-                return Response.ok(scope.join()).build();
-            } catch (StructuredTaskScope.FailedException e) {
-                return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                        .entity(new ErrorResult(e.getCause().getMessage()))
-                        .build();
-            }
+            var beverages = scope.join();
+            return Response.ok(beverages).build();
+        } catch (FailedException e) {
+            return error(SERVICE_UNAVAILABLE, e.getCause().getMessage());
         }
     }
 
@@ -100,23 +107,23 @@ public class StructuredBeverageResource {
     @Path("/timeout")
     public Response getBeveragesWithTimeout() throws InterruptedException {
         Log.info("Going to get beverages with scope-level timeout");
-        var joiner = StructuredTaskScope.Joiner.<StructuredBeverage>allSuccessfulOrThrow();
-        // 150 ms: always fires in dev (3 s delay), races in test (100 ms delay)
-        try (var scope = StructuredTaskScope.open(joiner, cf -> cf.withTimeout(Duration.ofMillis(150)))) {
+        try (var scope = StructuredTaskScope.open(
+                Joiner.<StructuredBeverage>allSuccessfulOrThrow(),
+                cf -> cf.withTimeout(Duration.ofMillis(150))
+        )) {
             scope.fork(bartender::get);
             scope.fork(bartender::get);
             scope.fork(bartender::get);
-            try {
-                return Response.ok(scope.join()).build();
-            } catch (StructuredTaskScope.TimeoutException e) {
-                return Response.status(Response.Status.REQUEST_TIMEOUT)
-                        .entity(new ErrorResult("scope timed out — all subtasks cancelled"))
-                        .build();
-            } catch (StructuredTaskScope.FailedException e) {
-                return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                        .entity(new ErrorResult(e.getCause().getMessage()))
-                        .build();
-            }
+            var beverages = scope.join();
+            return Response.ok(beverages).build();
+        } catch (TimeoutException e) {
+            return error(REQUEST_TIMEOUT, "scope timed out — all subtasks cancelled");
+        } catch (FailedException e) {
+            return error(SERVICE_UNAVAILABLE, e.getCause().getMessage());
         }
+    }
+
+    private static Response error(Response.Status status, String message) {
+        return Response.status(status).entity(new ErrorResult(message)).build();
     }
 }
