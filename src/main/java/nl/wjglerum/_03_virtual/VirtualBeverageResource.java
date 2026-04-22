@@ -59,10 +59,10 @@ public class VirtualBeverageResource {
     public List<VirtualBeverage> getBeveragesParallel() {
         Log.info("Going to get virtual beverages parallel");
         try {
-            var beverage1 = executor.submit(bartender::get);
-            var beverage2 = executor.submit(bartender::get);
-            var beverage3 = executor.submit(bartender::get);
-            var beverages = List.of(beverage1.get(), beverage2.get(), beverage3.get());
+            var b1 = executor.submit(bartender::get);
+            var b2 = executor.submit(bartender::get);
+            var b3 = executor.submit(bartender::get);
+            var beverages = List.of(b1.get(), b2.get(), b3.get());
             repository.save(beverages);
             return beverages;
         } catch (ExecutionException | InterruptedException e) {
@@ -72,14 +72,13 @@ public class VirtualBeverageResource {
 
     @GET
     @Path("/flood")
-    @Transactional(jakarta.transaction.Transactional.TxType.NOT_SUPPORTED)
     public FloodResult flood(@QueryParam("count") @DefaultValue("100") int count) {
         Log.infof("Flooding with %d virtual-thread requests", count);
         var succeeded = new AtomicInteger();
         var failed = new AtomicInteger();
         var start = System.currentTimeMillis();
         var futures = IntStream.range(0, count)
-                .mapToObj(i -> executor.submit(() -> {
+                .mapToObj(_ -> executor.submit(() -> {
                     try {
                         bartender.get();
                         succeeded.incrementAndGet();
@@ -98,13 +97,13 @@ public class VirtualBeverageResource {
     @Path("/custom")
     public List<VirtualBeverage> getBeveragesCustom() {
         Log.info("Going to get virtual beverages custom");
-        var currentThread = Thread.currentThread().getName();
-        var threadFactory = Thread.ofVirtual().name(currentThread + "-virtual-beverage-", 0).factory();
+        var name = Thread.currentThread().getName();
+        var threadFactory = Thread.ofVirtual().name(name + "-virtual-", 0).factory();
         try(var executor = Executors.newThreadPerTaskExecutor(threadFactory)) {
-            var beverage1 = executor.submit(bartender::get);
-            var beverage2 = executor.submit(bartender::get);
-            var beverage3 = executor.submit(bartender::get);
-            var beverages = List.of(beverage1.get(), beverage2.get(), beverage3.get());
+            var b1 = executor.submit(bartender::get);
+            var b2 = executor.submit(bartender::get);
+            var b3 = executor.submit(bartender::get);
+            var beverages = List.of(b1.get(), b2.get(), b3.get());
             repository.save(beverages);
             return beverages;
         } catch (ExecutionException | InterruptedException e) {

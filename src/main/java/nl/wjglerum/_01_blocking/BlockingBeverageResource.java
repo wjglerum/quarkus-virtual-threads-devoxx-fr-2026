@@ -43,17 +43,32 @@ public class BlockingBeverageResource {
     @Path("/sequential")
     public List<BlockingBeverage> getBeveragesSequential() {
         Log.info("Going to get blocking beverages sequential");
-        var beverage1 = bartender.get();
-        var beverage2 = bartender.get();
-        var beverage3 = bartender.get();
-        var beverages = List.of(beverage1, beverage2, beverage3);
+        var b1 = bartender.get();
+        var b2 = bartender.get();
+        var b3 = bartender.get();
+        var beverages = List.of(b1, b2, b3);
         repository.save(beverages);
         return beverages;
     }
 
     @GET
+    @Path("/parallel")
+    public List<BlockingBeverage> getBeveragesParallel() {
+        Log.info("Going to get blocking beverages parallel");
+        try {
+            var b1 = executor.submit(bartender::get);
+            var b2 = executor.submit(bartender::get);
+            var b3 = executor.submit(bartender::get);
+            var beverages = List.of(b1.get(), b2.get(), b3.get());
+            repository.save(beverages);
+            return beverages;
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
     @Path("/flood")
-    @Transactional(jakarta.transaction.Transactional.TxType.NOT_SUPPORTED)
     public FloodResult flood(@QueryParam("count") @DefaultValue("100") int count) {
         Log.infof("Flooding with %d blocking requests", count);
         var succeeded = new AtomicInteger();
@@ -78,21 +93,5 @@ public class BlockingBeverageResource {
             try { f.get(); } catch (ExecutionException | InterruptedException ignored) {}
         }
         return new FloodResult(count, succeeded.get(), failed.get(), System.currentTimeMillis() - start);
-    }
-
-    @GET
-    @Path("/parallel")
-    public List<BlockingBeverage> getBeveragesParallel() {
-        Log.info("Going to get blocking beverages parallel");
-        try {
-            var beverage1 = executor.submit(bartender::get);
-            var beverage2 = executor.submit(bartender::get);
-            var beverage3 = executor.submit(bartender::get);
-            var beverages = List.of(beverage1.get(), beverage2.get(), beverage3.get());
-            repository.save(beverages);
-            return beverages;
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

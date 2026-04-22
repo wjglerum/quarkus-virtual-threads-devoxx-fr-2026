@@ -3,11 +3,13 @@ package nl.wjglerum._02_reactive;
 import io.quarkus.hibernate.reactive.panache.common.WithTransaction;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
+
 import nl.wjglerum.FloodResult;
 
 import java.util.List;
@@ -26,7 +28,7 @@ public class ReactiveBeverageResource {
     @WithTransaction
     public Uni<ReactiveBeverage> getBeverage() {
         Log.info("Going to get reactive beverage");
-        return bartender.get().onItem().call(beverage -> repository.save(beverage));
+        return bartender.get().flatMap(beverage -> repository.save(beverage));
     }
 
     @GET
@@ -34,11 +36,11 @@ public class ReactiveBeverageResource {
     @WithTransaction
     public Uni<List<ReactiveBeverage>> getBeverageSequential() {
         Log.info("Going to get reactive beverages sequential");
-        return bartender.get().onItem().transformToUni(beverage1 ->
-                bartender.get().onItem().transformToUni(beverage2 ->
-                        bartender.get().onItem().transformToUni(beverage3 -> {
-                                    var beverages = List.of(beverage1, beverage2, beverage3);
-                                    return repository.save(beverages).replaceWith(beverages);
+        return bartender.get().flatMap(b1 ->
+                bartender.get().flatMap(b2 ->
+                        bartender.get().flatMap(b3 -> {
+                                    var beverages = List.of(b1, b2, b3);
+                                    return repository.save(beverages);
                                 }
                         )
                 )
@@ -50,11 +52,11 @@ public class ReactiveBeverageResource {
     @WithTransaction
     public Uni<List<ReactiveBeverage>> getBeveragesParallel() {
         Log.info("Going to get reactive beverages parallel");
-        var beverage1 = bartender.get();
-        var beverage2 = bartender.get();
-        var beverage3 = bartender.get();
-        return Uni.join().all(beverage1, beverage2, beverage3).andCollectFailures()
-                .onItem().call(beverages -> repository.save(beverages));
+        var b1 = bartender.get();
+        var b2 = bartender.get();
+        var b3 = bartender.get();
+        return Uni.join().all(b1, b2, b3).andCollectFailures()
+                .flatMap(beverages -> repository.save(beverages));
     }
 
     @GET

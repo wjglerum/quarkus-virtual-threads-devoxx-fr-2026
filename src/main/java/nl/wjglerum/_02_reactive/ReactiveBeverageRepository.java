@@ -10,17 +10,17 @@ import java.util.List;
 @ApplicationScoped
 public class ReactiveBeverageRepository implements PanacheRepository<ReactiveBeverageEntity> {
 
-    Uni<Void> save(ReactiveBeverage beverage) {
+    Uni<ReactiveBeverage> save(ReactiveBeverage beverage) {
         Log.info("Persisting reactive beverage");
         var entity = new ReactiveBeverageEntity(beverage.name());
-        return persist(entity).replaceWithVoid();
+        return persist(entity).replaceWith(beverage);
     }
 
-    Uni<Void> save(List<ReactiveBeverage> beverages) {
+    Uni<List<ReactiveBeverage>> save(List<ReactiveBeverage> beverages) {
         Log.info("Persisting reactive beverages");
         var entities = beverages.stream()
                 .map(beverage -> new ReactiveBeverageEntity(beverage.name()))
                 .toList();
-        return persist(entities);
+        return persist(entities).replaceWith(beverages);
     }
 }
