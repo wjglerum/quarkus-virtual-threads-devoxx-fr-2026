@@ -7,6 +7,9 @@ GET http://localhost:8080/beverage/blocking/sequential
 ### GET Blocking Parallel
 GET http://localhost:8080/beverage/blocking/parallel
 
+### GET Blocking Flood
+GET http://localhost:8080/beverage/blocking/flood?count=30
+
 ### GET Reactive Single
 GET http://localhost:8080/beverage/reactive
 
@@ -28,8 +31,32 @@ GET http://localhost:8080/beverage/virtual/parallel
 ### GET Virtual Custom
 GET http://localhost:8080/beverage/virtual/custom
 
+### GET Virtual Flood
+GET http://localhost:8080/beverage/virtual/flood?count=30
+
 ### GET Structured Simple
 GET http://localhost:8080/beverage/structured/simple
 
 ### GET Structured Custom
 GET http://localhost:8080/beverage/structured/custom
+
+### GET Structured Race
+GET http://localhost:8080/beverage/structured/race
+
+### GET Structured Failfast
+GET http://localhost:8080/beverage/structured/failfast
+
+### GET Structured Timeout
+GET http://localhost:8080/beverage/structured/timeout
+
+### GET Pinning Pinned
+GET http://localhost:8080/beverage/pinning/pinned
+
+### GET Pinning Unpinned
+GET http://localhost:8080/beverage/pinning/unpinned
+
+### GET Pinning Pinned Parallel
+GET http://localhost:8080/beverage/pinning/pinned/parallel
+
+### GET Pinning Unpinned Parallel
+GET http://localhost:8080/beverage/pinning/unpinned/parallel
