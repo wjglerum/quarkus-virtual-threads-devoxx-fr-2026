@@ -9,17 +9,24 @@ import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Response;
 
+import nl.wjglerum.ErrorResult;
 import nl.wjglerum.FloodResult;
 
 import java.util.List;
 import java.util.stream.IntStream;
+
+import static jakarta.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 
 @Path("/beverage/reactive")
 public class ReactiveBeverageResource {
 
     @Inject
     ReactiveBartender bartender;
+
+    @Inject
+    FlakeyReactiveBartender flakeyBartender;
 
     @Inject
     ReactiveBeverageRepository repository;
@@ -72,5 +79,21 @@ public class ReactiveBeverageResource {
                     var succeeded = results.stream().mapToInt(Integer::intValue).sum();
                     return new FloodResult(count, succeeded, count - succeeded, System.currentTimeMillis() - start);
                 });
+    }
+
+    @GET
+    @Path("/failfast")
+    public Uni<Response> getBeveragesFailFast() {
+        Log.info("Going to get beverages fail-fast (reactive) — first failure cancels the join");
+        var b1 = flakeyBartender.get();
+        var b2 = flakeyBartender.get();
+        var b3 = flakeyBartender.get();
+        return Uni.join().all(b1, b2, b3).andFailFast()
+                .map(beverages -> Response.ok(beverages).build())
+                .onFailure().recoverWithItem(e -> error(SERVICE_UNAVAILABLE, e.getMessage()));
+    }
+
+    private static Response error(Response.Status status, String message) {
+        return Response.status(status).entity(new ErrorResult(message)).build();
     }
 }

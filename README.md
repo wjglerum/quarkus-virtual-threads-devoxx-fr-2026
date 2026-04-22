@@ -56,6 +56,7 @@ The traditional Java model. Each request runs on a platform (OS) thread from the
 | `/beverage/blocking/sequential` | 3 requests, one after another |
 | `/beverage/blocking/parallel` | 3 requests via `ManagedExecutor` |
 | `/beverage/blocking/flood?count=100` | 100 concurrent requests — shows saturation |
+| `/beverage/blocking/failfast` | 3 parallel flakey calls — first failure returns 503, siblings keep running |
 
 ---
 
@@ -75,6 +76,7 @@ The reactive model. Requests run on the Vert.x event loop; the thread is **never
 | `/beverage/reactive/sequential` | 3 chained `Uni` calls |
 | `/beverage/reactive/parallel` | 3 parallel `Uni` calls via `Uni.join()` |
 | `/beverage/reactive/flood?count=100` | 100 concurrent requests |
+| `/beverage/reactive/failfast` | 3 parallel flakey calls via `Uni.join().andFailFast()` — first failure cancels the join |
 
 ---
 
@@ -95,6 +97,7 @@ Virtual threads (JEP 444). Each request runs on a **virtual thread** — cheap, 
 | `/beverage/virtual/parallel` | 3 parallel calls via injected `@VirtualThreads` executor |
 | `/beverage/virtual/custom` | 3 parallel calls with a named custom thread factory |
 | `/beverage/virtual/flood?count=100` | 100 concurrent requests — all succeed |
+| `/beverage/virtual/failfast` | 3 parallel flakey calls — first failure returns 503, siblings keep running |
 
 ---
 

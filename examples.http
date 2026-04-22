@@ -10,6 +10,9 @@ GET http://localhost:8080/beverage/blocking/parallel
 ### GET Blocking Flood
 GET http://localhost:8080/beverage/blocking/flood?count=100
 
+### GET Blocking Failfast
+GET http://localhost:8080/beverage/blocking/failfast
+
 ### GET Reactive Single
 GET http://localhost:8080/beverage/reactive
 
@@ -21,6 +24,9 @@ GET http://localhost:8080/beverage/reactive/parallel
 
 ### GET Reactive Flood
 GET http://localhost:8080/beverage/reactive/flood?count=100
+
+### GET Reactive Failfast
+GET http://localhost:8080/beverage/reactive/failfast
 
 ### GET Virtual Single
 GET http://localhost:8080/beverage/virtual
@@ -36,6 +42,9 @@ GET http://localhost:8080/beverage/virtual/custom
 
 ### GET Virtual Flood
 GET http://localhost:8080/beverage/virtual/flood?count=100
+
+### GET Virtual Failfast
+GET http://localhost:8080/beverage/virtual/failfast
 
 ### GET Structured Simple
 GET http://localhost:8080/beverage/structured/simple

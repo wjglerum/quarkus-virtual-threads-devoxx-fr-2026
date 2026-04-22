@@ -7,6 +7,7 @@ import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.context.ManagedExecutor;
 
 import java.util.ArrayList;
@@ -16,7 +17,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import nl.wjglerum.ErrorResult;
 import nl.wjglerum.FloodResult;
+
+import static jakarta.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 
 @Path("/beverage/blocking")
 @Transactional
@@ -24,6 +28,9 @@ public class BlockingBeverageResource {
 
     @Inject
     BlockingBartender bartender;
+
+    @Inject
+    FlakeyBlockingBartender flakeyBartender;
 
     @Inject
     BlockingBeverageRepository repository;
@@ -93,5 +100,26 @@ public class BlockingBeverageResource {
             try { f.get(); } catch (ExecutionException | InterruptedException ignored) {}
         }
         return new FloodResult(count, succeeded.get(), failed.get(), System.currentTimeMillis() - start);
+    }
+
+    @GET
+    @Path("/failfast")
+    public Response getBeveragesFailFast() {
+        Log.info("Going to get beverages fail-fast (blocking) — no sibling cancellation unlike StructuredTaskScope");
+        var b1 = executor.submit(flakeyBartender::get);
+        var b2 = executor.submit(flakeyBartender::get);
+        var b3 = executor.submit(flakeyBartender::get);
+        try {
+            return Response.ok(List.of(b1.get(), b2.get(), b3.get())).build();
+        } catch (ExecutionException e) {
+            return error(SERVICE_UNAVAILABLE, e.getCause().getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return error(SERVICE_UNAVAILABLE, "interrupted");
+        }
+    }
+
+    private static Response error(Response.Status status, String message) {
+        return Response.status(status).entity(new ErrorResult(message)).build();
     }
 }

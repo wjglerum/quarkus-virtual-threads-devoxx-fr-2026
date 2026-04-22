@@ -7,11 +7,16 @@ import io.quarkus.test.junit.virtual.VirtualThreadUnit;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
+import org.hamcrest.MatcherAssert;
+
+import java.util.List;
+
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.in;
 
 @QuarkusTest
 @ShouldNotPin
@@ -79,5 +84,16 @@ class VirtualBeverageResourceTest {
                 .body("requested", equalTo(5))
                 .body("succeeded", equalTo(5))
                 .body("failed", equalTo(0));
+    }
+
+    @Test
+    void testVirtualFailFastEndpoint() {
+        var status = given()
+                .when()
+                .get("/failfast")
+                .then()
+                .statusCode(in(List.of(200, 503)))
+                .extract().statusCode();
+        MatcherAssert.assertThat(status, in(List.of(200, 503)));
     }
 }

@@ -9,6 +9,7 @@ import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -17,7 +18,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
+import nl.wjglerum.ErrorResult;
 import nl.wjglerum.FloodResult;
+
+import static jakarta.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 
 @Path("/beverage/virtual")
 @Transactional
@@ -26,6 +30,9 @@ public class VirtualBeverageResource {
 
     @Inject
     VirtualBartender bartender;
+
+    @Inject
+    FlakeyVirtualBartender flakeyBartender;
 
     @Inject
     VirtualBeverageRepository repository;
@@ -109,5 +116,26 @@ public class VirtualBeverageResource {
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @GET
+    @Path("/failfast")
+    public Response getBeveragesFailFast() {
+        Log.info("Going to get beverages fail-fast (virtual) — no sibling cancellation unlike StructuredTaskScope");
+        var b1 = executor.submit(flakeyBartender::get);
+        var b2 = executor.submit(flakeyBartender::get);
+        var b3 = executor.submit(flakeyBartender::get);
+        try {
+            return Response.ok(List.of(b1.get(), b2.get(), b3.get())).build();
+        } catch (ExecutionException e) {
+            return error(SERVICE_UNAVAILABLE, e.getCause().getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return error(SERVICE_UNAVAILABLE, "interrupted");
+        }
+    }
+
+    private static Response error(Response.Status status, String message) {
+        return Response.status(status).entity(new ErrorResult(message)).build();
     }
 }
