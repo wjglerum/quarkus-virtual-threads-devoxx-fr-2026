@@ -5,13 +5,19 @@ import io.quarkus.virtual.threads.VirtualThreads;
 import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.QueryParam;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
+
+import nl.wjglerum.FloodResult;
 
 @Path("/beverage/virtual")
 @Transactional
@@ -62,6 +68,30 @@ public class VirtualBeverageResource {
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @GET
+    @Path("/flood")
+    @Transactional(jakarta.transaction.Transactional.TxType.NOT_SUPPORTED)
+    public FloodResult flood(@QueryParam("count") @DefaultValue("100") int count) {
+        Log.infof("Flooding with %d virtual-thread requests", count);
+        var succeeded = new AtomicInteger();
+        var failed = new AtomicInteger();
+        var start = System.currentTimeMillis();
+        var futures = IntStream.range(0, count)
+                .mapToObj(i -> executor.submit(() -> {
+                    try {
+                        bartender.get();
+                        succeeded.incrementAndGet();
+                    } catch (Exception e) {
+                        failed.incrementAndGet();
+                    }
+                }))
+                .toList();
+        futures.forEach(f -> {
+            try { f.get(); } catch (Exception ignored) { failed.incrementAndGet(); }
+        });
+        return new FloodResult(count, succeeded.get(), failed.get(), System.currentTimeMillis() - start);
     }
 
     @GET

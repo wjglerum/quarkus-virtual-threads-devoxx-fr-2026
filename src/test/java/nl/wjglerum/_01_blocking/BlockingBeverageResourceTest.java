@@ -8,6 +8,8 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 @QuarkusTest
 @TestHTTPEndpoint(BlockingBeverageResource.class)
@@ -46,5 +48,18 @@ class BlockingBeverageResourceTest {
                 .contentType(JSON)
                 .body("size()", is(3))
                 .body(containsString("Blocking coffee"));
+    }
+
+    @Test
+    void testBlockingFloodEndpoint() {
+        given()
+                .queryParam("count", 5)
+                .when()
+                .get("/flood")
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .body("requested", equalTo(5))
+                .body("succeeded", greaterThanOrEqualTo(1));
     }
 }
