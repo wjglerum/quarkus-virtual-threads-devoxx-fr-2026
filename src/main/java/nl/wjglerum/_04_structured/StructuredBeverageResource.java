@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
+import nl.wjglerum.ErrorResult;
 
 import java.time.Duration;
 import java.util.List;
@@ -60,15 +61,11 @@ public class StructuredBeverageResource {
         }
     }
 
-    /**
-     * Race mode: fork 3 bartenders, persist the first one to finish.
-     * The other two are cancelled automatically when the scope closes.
-     */
     @GET
     @Path("/race")
     @Transactional
     public StructuredBeverage getBeverageRace() throws InterruptedException {
-        Log.info("Going to race 3 bartenders — first one wins");
+        Log.info("Going to race 3 bartenders — first one wins, siblings cancelled");
         var joiner = StructuredTaskScope.Joiner.<StructuredBeverage>anySuccessfulOrThrow();
         try (var scope = StructuredTaskScope.open(joiner)) {
             scope.fork(bartender::get);
@@ -80,10 +77,6 @@ public class StructuredBeverageResource {
         }
     }
 
-    /**
-     * Fail-fast: if any subtask throws, the scope cancels the remaining ones immediately.
-     * Shows StructuredTaskScope.Joiner.allSuccessfulOrThrow() in action with a flakey bartender.
-     */
     @GET
     @Path("/failfast")
     public Response getBeveragesFailFast() throws InterruptedException {
@@ -94,39 +87,34 @@ public class StructuredBeverageResource {
             scope.fork(flakeyBartender::get);
             scope.fork(flakeyBartender::get);
             try {
-                var beverages = scope.join();
-                return Response.ok(beverages).build();
+                return Response.ok(scope.join()).build();
             } catch (StructuredTaskScope.FailedException e) {
                 return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                        .entity("{\"error\":\"" + e.getCause().getMessage() + "\"}")
+                        .entity(new ErrorResult(e.getCause().getMessage()))
                         .build();
             }
         }
     }
 
-    /**
-     * Timeout: the whole scope is cancelled after 150 ms — always fires in dev (3 s delay),
-     * may or may not fire in test (100 ms delay). Subtasks are cancelled automatically.
-     */
     @GET
     @Path("/timeout")
     public Response getBeveragesWithTimeout() throws InterruptedException {
         Log.info("Going to get beverages with scope-level timeout");
         var joiner = StructuredTaskScope.Joiner.<StructuredBeverage>allSuccessfulOrThrow();
+        // 150 ms: always fires in dev (3 s delay), races in test (100 ms delay)
         try (var scope = StructuredTaskScope.open(joiner, cf -> cf.withTimeout(Duration.ofMillis(150)))) {
             scope.fork(bartender::get);
             scope.fork(bartender::get);
             scope.fork(bartender::get);
             try {
-                var beverages = scope.join();
-                return Response.ok(beverages).build();
+                return Response.ok(scope.join()).build();
             } catch (StructuredTaskScope.TimeoutException e) {
                 return Response.status(Response.Status.REQUEST_TIMEOUT)
-                        .entity("{\"error\":\"scope timed out — all subtasks cancelled\"}")
+                        .entity(new ErrorResult("scope timed out — all subtasks cancelled"))
                         .build();
             } catch (StructuredTaskScope.FailedException e) {
                 return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                        .entity("{\"error\":\"" + e.getCause().getMessage() + "\"}")
+                        .entity(new ErrorResult(e.getCause().getMessage()))
                         .build();
             }
         }
