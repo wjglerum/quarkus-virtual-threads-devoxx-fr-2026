@@ -12,11 +12,11 @@ Each approach uses the same business logic so the trade-offs are immediately com
 
 | Requirement | Version |
 |---|---|
-| JDK | 26 Early Access ([download](https://jdk.java.net/26/)) |
+| JDK | 26 with preview features enabled |
 | Docker or Podman | running |
 | Maven | bundled via `./mvnw` |
 
-> **Why Java 26 EA?** Structured Concurrency (`StructuredTaskScope`) is a preview feature that requires `--enable-preview`. Everything else works on Java 21+.
+> **Why `--enable-preview`?** Structured Concurrency (`StructuredTaskScope`) is a preview feature in Java 26. Everything else works on Java 21+.
 
 All external dependencies (PostgreSQL, WireMock, Grafana/LGTM) are started automatically as **DevServices** when you run in dev mode — no manual setup required.
 
