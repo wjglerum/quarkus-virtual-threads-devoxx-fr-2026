@@ -28,21 +28,21 @@ public class PinningBeverageResource {
     @GET
     @Path("/pinned")
     public PinningBeverage getPinned() {
-        Log.info("Getting pinned beverage — virtual thread will be pinned to carrier");
+        Log.info("Getting beverage via synchronized (used to pin pre Java 24)");
         return pinningBartender.get();
     }
 
     @GET
     @Path("/unpinned")
     public UnpinningBeverage getUnpinned() {
-        Log.info("Getting unpinned beverage — virtual thread yields to carrier");
+        Log.info("Getting beverage via ReentrantLock (never pinned)");
         return unpinningBartender.get();
     }
 
     @GET
     @Path("/pinned/parallel")
     public List<PinningBeverage> getPinnedParallel() throws ExecutionException, InterruptedException {
-        Log.info("Getting 3 pinned beverages in parallel — effective concurrency limited by carrier threads");
+        Log.info("Getting 3 beverages in parallel via synchronized");
         var b1 = executor.submit(pinningBartender::get);
         var b2 = executor.submit(pinningBartender::get);
         var b3 = executor.submit(pinningBartender::get);
@@ -52,7 +52,7 @@ public class PinningBeverageResource {
     @GET
     @Path("/unpinned/parallel")
     public List<UnpinningBeverage> getUnpinnedParallel() throws ExecutionException, InterruptedException {
-        Log.info("Getting 3 unpinned beverages in parallel — true concurrency on virtual threads");
+        Log.info("Getting 3 beverages in parallel via ReentrantLock");
         var b1 = executor.submit(unpinningBartender::get);
         var b2 = executor.submit(unpinningBartender::get);
         var b3 = executor.submit(unpinningBartender::get);

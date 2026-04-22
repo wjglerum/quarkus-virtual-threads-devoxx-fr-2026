@@ -15,11 +15,11 @@ public class UnpinningBartender {
     @RestClient
     CoffeeMachineClient coffeeMachine;
 
-    // ReentrantLock does NOT pin — virtual thread yields to its carrier during the HTTP wait
+    // ReentrantLock never pinned — the recommended alternative before JEP 491
     private final ReentrantLock lock = new ReentrantLock();
 
     public UnpinningBeverage get() {
-        Log.info("Warming up the unpinning coffee machine (NOT pinned)");
+        Log.info("Warming up the coffee machine (ReentrantLock)");
         lock.lock();
         try {
             var response = coffeeMachine.brew();

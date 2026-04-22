@@ -12,14 +12,13 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 
 @QuarkusTest
+@ShouldNotPin
 @VirtualThreadUnit
 @TestHTTPEndpoint(PinningBeverageResource.class)
 class PinningBeverageResourceTest {
 
     @Test
-    // Intentionally NOT annotated with @ShouldNotPin — this demonstrates
-    // that synchronized pins virtual threads. Add @ShouldNotPin to see the test fail.
-    void testPinnedEndpointDoesPinCarrierThread() {
+    void testSynchronizedDoesNotPin() {
         given()
                 .when()
                 .get("/pinned")
@@ -30,8 +29,7 @@ class PinningBeverageResourceTest {
     }
 
     @Test
-    @ShouldNotPin
-    void testUnpinnedEndpointDoesNotPinCarrierThread() {
+    void testReentrantLockDoesNotPin() {
         given()
                 .when()
                 .get("/unpinned")
@@ -42,7 +40,7 @@ class PinningBeverageResourceTest {
     }
 
     @Test
-    void testPinnedParallelEndpoint() {
+    void testSynchronizedParallelDoesNotPin() {
         given()
                 .when()
                 .get("/pinned/parallel")
@@ -54,8 +52,7 @@ class PinningBeverageResourceTest {
     }
 
     @Test
-    @ShouldNotPin
-    void testUnpinnedParallelEndpoint() {
+    void testReentrantLockParallelDoesNotPin() {
         given()
                 .when()
                 .get("/unpinned/parallel")

@@ -122,19 +122,20 @@ Structured Concurrency (JEP 464, preview). Subtasks are **scoped to a parent tas
 
 > `GET /beverage/pinning`
 
-Virtual threads **pin to their carrier thread** when they enter a `synchronized` block during I/O. A pinned virtual thread behaves like a platform thread — it blocks the carrier and defeats the purpose of virtual threads. `ReentrantLock` does not pin.
+**Historical context:** in Java 21–23, a virtual thread holding a `synchronized` monitor during I/O would **pin** to its carrier thread — blocking it like a platform thread and defeating the scalability benefit. The standard workaround was to replace `synchronized` with `ReentrantLock`.
 
-- `PinningBartender` uses `synchronized` → pins the carrier
-- `UnpinningBartender` uses `ReentrantLock` → yields the carrier
-- Tests use `@ShouldNotPin` to assert pinning behaviour
-- Run with `-Djdk.tracePinnedThreads=short` (already configured) to see pinning in logs
+**JEP 491 (Java 24)** fixed this: `synchronized` no longer pins. Both patterns yield the carrier freely on Java 24+, as confirmed by `@ShouldNotPin` on all four tests.
+
+- `PinningBartender` uses `synchronized` — the old culprit, now safe
+- `UnpinningBartender` uses `ReentrantLock` — the old workaround, still valid
+- Run with `-Djdk.tracePinnedThreads=short` (already configured) to observe zero pinning events
 
 | Endpoint | Description |
 |---|---|
-| `/beverage/pinning/pinned` | Single call through `synchronized` method |
+| `/beverage/pinning/pinned` | Single call through `synchronized` |
 | `/beverage/pinning/unpinned` | Single call through `ReentrantLock` |
-| `/beverage/pinning/pinned/parallel` | 3 parallel pinned calls |
-| `/beverage/pinning/unpinned/parallel` | 3 parallel unpinned calls |
+| `/beverage/pinning/pinned/parallel` | 3 parallel calls through `synchronized` |
+| `/beverage/pinning/unpinned/parallel` | 3 parallel calls through `ReentrantLock` |
 
 ---
 

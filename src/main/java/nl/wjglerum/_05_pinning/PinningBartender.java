@@ -13,9 +13,9 @@ public class PinningBartender {
     @RestClient
     CoffeeMachineClient coffeeMachine;
 
-    // synchronized pins the virtual thread to its carrier for the duration of the HTTP call
+    // synchronized used to pin in Java 21–23; fixed by JEP 491 in Java 24
     public synchronized PinningBeverage get() {
-        Log.info("Warming up the pinning coffee machine (PINNED!)");
+        Log.info("Warming up the coffee machine (synchronized)");
         var response = coffeeMachine.brew();
         return new PinningBeverage("Pinning " + response.name());
     }
