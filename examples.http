@@ -19,6 +19,9 @@ GET http://localhost:8080/beverage/reactive/sequential
 ### GET Reactive Parallel
 GET http://localhost:8080/beverage/reactive/parallel
 
+### GET Reactive Flood
+GET http://localhost:8080/beverage/reactive/flood?count=30
+
 ### GET Virtual Single
 GET http://localhost:8080/beverage/virtual
 

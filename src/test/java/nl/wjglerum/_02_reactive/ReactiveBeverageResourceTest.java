@@ -8,6 +8,7 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.equalTo;
 
 @QuarkusTest
 @TestHTTPEndpoint(ReactiveBeverageResource.class)
@@ -46,5 +47,19 @@ class ReactiveBeverageResourceTest {
                 .contentType(JSON)
                 .body("size()", is(3))
                 .body(containsString("Reactive Coffee"));
+    }
+
+    @Test
+    void testReactiveFloodEndpoint() {
+        given()
+                .queryParam("count", 5)
+                .when()
+                .get("/flood")
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .body("requested", equalTo(5))
+                .body("succeeded", equalTo(5))
+                .body("failed", equalTo(0));
     }
 }
