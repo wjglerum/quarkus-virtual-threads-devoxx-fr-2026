@@ -33,9 +33,9 @@ public class StructuredBeverageResource {
     public List<StructuredBeverage> getBeveragesSimple() throws InterruptedException {
         Log.info("Going to get structured beverages simple");
         try (var scope = StructuredTaskScope.open()) {
-            var beverage1 = scope.fork(() -> bartender.get());
-            var beverage2 = scope.fork(() -> bartender.get());
-            var beverage3 = scope.fork(() -> bartender.get());
+            var beverage1 = scope.fork(bartender::get);
+            var beverage2 = scope.fork(bartender::get);
+            var beverage3 = scope.fork(bartender::get);
             scope.join();
             var beverages = List.of(beverage1.get(), beverage2.get(), beverage3.get());
             repository.save(beverages);

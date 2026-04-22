@@ -6,12 +6,14 @@ import io.quarkus.test.junit.virtual.ShouldNotPin;
 import io.quarkus.test.junit.virtual.VirtualThreadUnit;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.in;
-import static org.hamcrest.Matchers.is;
 
 @QuarkusTest
 @ShouldNotPin(atMost = 5)
@@ -63,7 +65,7 @@ class StructuredBeverageResourceTest {
                 .then()
                 .extract()
                 .statusCode();
-        is(in(java.util.List.of(200, 503))).matches(status);
+        assertThat(status, in(List.of(200, 503)));
     }
 
     @Test
@@ -76,6 +78,6 @@ class StructuredBeverageResourceTest {
                 .then()
                 .extract()
                 .statusCode();
-        is(in(java.util.List.of(200, 408))).matches(status);
+        assertThat(status, in(List.of(200, 408)));
     }
 }

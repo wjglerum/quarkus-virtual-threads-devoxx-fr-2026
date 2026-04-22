@@ -37,7 +37,7 @@ public class VirtualBeverageResource {
     @GET
     public VirtualBeverage getBeverage() {
         Log.info("Going to get virtual beverage");
-        var beverage =  bartender.get();
+        var beverage = bartender.get();
         repository.save(beverage);
         return beverage;
     }
@@ -46,7 +46,7 @@ public class VirtualBeverageResource {
     @Path("/sequential")
     public List<VirtualBeverage> getBeveragesSequential() {
         Log.info("Going to get virtual beverages sequential");
-        var beverage1 =  bartender.get();
+        var beverage1 = bartender.get();
         var beverage2 =  bartender.get();
         var beverage3 =  bartender.get();
         var beverages = List.of(beverage1, beverage2, beverage3);
@@ -88,9 +88,9 @@ public class VirtualBeverageResource {
                     }
                 }))
                 .toList();
-        futures.forEach(f -> {
-            try { f.get(); } catch (Exception ignored) { failed.incrementAndGet(); }
-        });
+        for (var f : futures) {
+            try { f.get(); } catch (ExecutionException | InterruptedException ignored) {}
+        }
         return new FloodResult(count, succeeded.get(), failed.get(), System.currentTimeMillis() - start);
     }
 
